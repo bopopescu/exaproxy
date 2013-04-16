@@ -1,0 +1,132 @@
+# encoding: utf-8
+"""
+monitor.py
+
+Created by Thomas Mangin on 2012-02-05.
+Copyright (c) 2011-2013 Exa Networks. All rights reserved.
+"""
+
+from collections import deque
+
+class _Container (object):
+	def __init__ (self,supervisor):
+		self.supervisor = supervisor
+
+class Monitor (object):
+	nb_recorded = 60
+
+	def __init__(self,supervisor):
+		self._supervisor = supervisor
+		self._container = _Container(supervisor)
+		self.history = deque()
+
+	def introspection (self,objects):
+		obj = self._container
+		ks = [_ for _ in dir(obj) if not _.startswith('__') and not _.endswith('__')]
+
+		for key in objects:
+			if not key in ks:
+				raise StopIteration()
+			obj = getattr(obj,key)
+			ks = [_ for _ in dir(obj) if not _.startswith('__') and not _.endswith('__')]
+
+		for k in ks:
+			value = str(getattr(obj,k))
+			if value.startswith('<bound method'):
+				continue
+			if value.startswith('<function '):
+				continue
+			yield k, value
+
+	def configuration (self):
+		conf = self._supervisor.configuration
+		#content = self._supervisor.content
+		#client = self._supervisor.client
+		#log = self._supervisor.log
+		#manager = self._supervisor.manager
+		#reactor = self._supervisor.reactor
+
+		return {
+			'exaproxy.debug.log' : bool(conf.debug.log),
+			'exaproxy.debug.pdb' : bool(conf.debug.pdb),
+			'exaproxy.debug.memory' : conf.debug.memory,
+			'exaproxy.daemon.deamonize' : conf.daemon.daemonize,
+			'exaproxy.daemon.identifier' : conf.daemon.identifier,
+			'exaproxy.daemon.pidfile' : conf.daemon.pidfile,
+			'exaproxy.daemon.sleep' : conf.daemon.speed,
+			'exaproxy.profile.enable' : conf.profile.enable,
+			'exaproxy.profile.destination' : conf.profile.destination,
+			'exaproxy.dns.resolver' : conf.dns.resolver,
+			'exaproxy.dns.timeout' : conf.dns.timeout,
+#			'exaproxy.dns.force-ttl' : conf.dns.force_ttl,
+			'exaproxy.dns.ttl' : conf.dns.ttl,
+			'exaproxy.dns.expire' : conf.dns.expire,
+			'exaproxy.daemon.user' : conf.daemon.user,
+			'exaproxy.daemon.reactor' : conf.daemon.reactor,
+			'exaproxy.log.level.daemon' : conf.log.daemon,
+			'exaproxy.log.level.supervisor' : conf.log.supervisor,
+			'exaproxy.log.level.signal' : conf.log.signal,
+			'exaproxy.log.level.worker' : conf.log.worker,
+			'exaproxy.log.level.server' : conf.log.server,
+			'exaproxy.log.level.manager' : conf.log.manager,
+			'exaproxy.log.level.client' : conf.log.client,
+			'exaproxy.log.level.download' : conf.log.download,
+			'exaproxy.log.level.http' : conf.log.http,
+			'exaproxy.log.level.configuration' : conf.log.configuration,
+			'exaproxy.tcp4.host' : conf.tcp4.host,
+			'exaproxy.tcp4.port' : conf.tcp4.port,
+			'exaproxy.tcp4.backlog' : conf.tcp4.backlog,
+			'exaproxy.tcp4.timeout' : conf.tcp4.timeout,
+			'exaproxy.tcp4.listen' : conf.tcp4.listen,
+			'exaproxy.tcp4.out' : conf.tcp4.out,
+			'exaproxy.tcp6.host' : conf.tcp6.host,
+			'exaproxy.tcp6.port' : conf.tcp6.port,
+			'exaproxy.tcp6.backlog' : conf.tcp6.backlog,
+			'exaproxy.tcp6.timeout' : conf.tcp6.timeout,
+			'exaproxy.tcp6.listen' : conf.tcp6.listen,
+			'exaproxy.tcp6.out' : conf.tcp6.out,
+			'exaproxy.http.connect' : conf.http.allow_connect,
+			'exaproxy.http.forward' : conf.http.forward,
+			'exaproxy.http.transparent' : conf.http.transparent,
+			'exaproxy.http.extensions' : ' '.join(conf.http.extensions),
+			'exaproxy.proxy.version' : conf.proxy.version,
+			'exaproxy.redirector.enable' : conf.redirector.enable,
+			'exaproxy.redirector.protocol' : conf.redirector.protocol,
+			'exaproxy.redirector.program' : conf.redirector.program,
+			'exaproxy.redirector.minimum' : conf.redirector.minimum,
+			'exaproxy.redirector.maximum' : conf.redirector.maximum,
+#			'exaproxy.redirector.timeout' : conf.redirector.timeout,
+			'exaproxy.usage.destination' : conf.usage.destination,
+			'exaproxy.usage.enable' : conf.usage.enable,
+			'exaproxy.web.enable' : conf.web.enable,
+			'exaproxy.web.host' : '127.0.0.1',
+			'exaproxy.web.port' : conf.web.port,
+		}
+
+	def statistics (self):
+		#conf = self._supervisor.configuration
+		content = self._supervisor.content
+		client = self._supervisor.client
+		#log = self._supervisor.log
+		manager = self._supervisor.manager
+		reactor = self._supervisor.reactor
+
+		return {
+			'running.pid.saved' : self._supervisor.pid._saved_pid,
+			'running.processes.forked' : len(manager.worker),
+			'running.processes.min' : manager.low,
+			'running.processes.max' : manager.high,
+			'running.proxy.clients.established': len(client.byname),
+			'running.proxy.servers.opening': len(content.opening),
+			'running.proxy.servers.established': len(content.established),
+			'running.transfer.request' : client.total_sent,
+			'running.transfer.download' : content.total_sent,
+			'running.load.loops' : reactor.nb_loops,
+			'running.load.events' : reactor.nb_events,
+			'running.queue.size' : manager.queue.qsize(),
+		}
+
+	def record (self):
+		self.history.append(self.statistics())
+		if len(self.history) > self.nb_recorded:
+			self.history.popleft()
