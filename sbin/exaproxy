@@ -1,0 +1,67 @@
+#!/bin/sh
+
+VERSION="1.0.8"
+
+dirname=`dirname $0`
+
+case $dirname in
+/*)
+	path=$dirname/..
+	;;
+*)
+	cd `pwd`/$dirname/.. > /dev/null
+	path=`pwd`
+	cd - > /dev/null
+	;;
+esac
+
+export PYTHONPATH=$path/lib
+
+if [ "$INTERPRETER" != "" ]
+then
+	INTERPRETER=`which $INTERPRETER`
+fi
+
+PYPY=`which pypy 2> /dev/null`
+PYTHON27=`which python2.7 2> /dev/null`
+PYTHON26=`which python2.6 2> /dev/null`
+PYTHON25=`which python2.5 2> /dev/null`
+PYTHON24=`which python2.4 2> /dev/null`
+PYTHON2=`which python2 2> /dev/null`
+PYTHON=`which python 2> /dev/null`
+
+if [ -f "$INTERPRETER" ]
+then
+		DUMMY='need this for the then'
+elif [ -f "$PYPY" ]
+then
+  INTERPRETER=$PYPY
+elif [ -f "$PYTHON27" ]
+then
+  INTERPRETER=$PYTHON27
+elif [ -f "$PYTHON26" ]
+then
+  INTERPRETER=$PYTHON26
+elif [ -f "$PYTHON25" ]
+then
+  INTERPRETER=$PYTHON25
+elif [ -f "$PYTHON24" ]
+then
+  INTERPRETER=$PYTHON24
+elif [ -f "$PYTHON2" ]
+then
+  INTERPRETER=$PYTHON2
+elif [ -f "$PYTHON" ]
+then
+  INTERPRETER=$PYTHON
+else
+  INTERPRETER=python
+fi
+
+APPLICATIONS=`$INTERPRETER -c "import sys,os; print ' '.join(os.path.join(_,'exaproxy','application.py') for _ in sys.path if os.path.isfile('/'.join((_,'exaproxy/application.py'))))"`
+APPLICATION=`echo $APPLICATIONS | awk '{ print $1; }'`
+
+# 3x (2^16) = 196608 (should be enough for everyone as otherwise we will run of TCP port for outgoing connections anyway)
+ulimit -n 196608 > /dev/null 2> /dev/null
+
+exec $INTERPRETER -m exaproxy.util.debug $APPLICATION --release $VERSION $*
