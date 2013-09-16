@@ -370,8 +370,9 @@ class Supervisor (object):
 		# only start listening once we know we were able to fork our worker processes
 		tcp4 = self.configuration.tcp4
 		tcp6 = self.configuration.tcp6
+		icap = self.configuration.icap
 
-		if not has_ipv6 and (tcp6.listen or tcp6.out):
+		if not has_ipv6 and (tcp6.listen or tcp6.out or icap.ipv6):
 			tcp6.listen = False
 			tcp6.out = False
 			self.log.critical('your python interpreter does not have ipv6 support !')
@@ -380,7 +381,7 @@ class Supervisor (object):
 		if not out:
 			self.log.critical('we need to use IPv4 or IPv6 for outgoing connection - both can not be disabled !')
 
-		listen = bool(tcp4.listen or tcp6.listen)
+		listen = bool(tcp4.listen or tcp6.listen) or bool(icap.host or icap.ipv6)
 		if not listen:
 			self.log.critical('Not listening on either IPv4 or IPv6.')
 
@@ -398,17 +399,17 @@ class Supervisor (object):
 			if not ok:
 				self.log.critical('IPv6 proxy, unable to listen on %s:%s' % (tcp6.host,tcp6.port))
 
-		if ok and self.configuration.icap.enable:
-			s = self.icap.listen(self.configuration.icap.host, self.configuration.icap.port, tcp4.timeout, tcp4.backlog)
+		if ok and icap.enable:
+			s = self.icap.listen(icap.host, icap.port, tcp4.timeout, tcp4.backlog)
 			ok = bool(s)
 			if not ok:
-				self.log.critical('ICAP server, unable to listen on %s:%s' % (self.configuration.icap.host, self.configuration.icap.port))
+				self.log.critical('ICAP server, unable to listen on %s:%s' % (icap.host, icap.port))
 
-		if ok and self.configuration.icap.enable and tcp6.listen:
-			s = self.icap.listen(self.configuration.icap.ipv6, self.configuration.icap.port, tcp4.timeout, tcp4.backlog)
+		if ok and icap.enable and tcp6.listen:
+			s = self.icap.listen(icap.ipv6, icap.port, tcp4.timeout, tcp4.backlog)
 			ok = bool(s)
 			if not ok:
-				self.log.critical('ICAP server, unable to listen on %s:%s' % (self.configuration.icap.host, self.configuration.icap.port))
+				self.log.critical('ICAP server, unable to listen on %s:%s' % (icap.host, icap.port))
 
 		if ok and self.configuration.web.enable:
 			s = self.web.listen(self.configuration.web.host,self.configuration.web.port, 10, 10)
