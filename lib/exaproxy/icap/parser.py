@@ -49,7 +49,10 @@ class ICAPParser (object):
 
 	def parseRequest (self, peer, icap_string, http_string):
 		request_lines = (p for ss in icap_string.split('\r\n') for p in ss.split('\n'))
-		[(request_line, _)] = zip(request_lines, '_') or [(None, None)]
+		try:
+			request_line = request_lines.next()
+		except StopIteration:
+			request_line = None
 
 		method, url, version = self.parseRequestLine(request_line)
 		method = method.upper()
