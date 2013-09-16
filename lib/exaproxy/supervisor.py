@@ -75,6 +75,7 @@ class Supervisor (object):
 
 		self.poller.setupRead('read_proxy')           # Listening proxy sockets
 		self.poller.setupRead('read_web')             # Listening webserver sockets
+		self.poller.setupRead('read_icap')             # Listening icap sockets
 		self.poller.setupRead('read_workers')         # Pipes carrying responses from the child processes
 		self.poller.setupRead('read_resolver')        # Sockets currently listening for DNS responses
 
@@ -98,8 +99,9 @@ class Supervisor (object):
 		self.resolver = ResolverManager(self.poller, self.configuration, configuration.dns.retries*10)
 		self.proxy = Server('http proxy',self.poller,'read_proxy', configuration.http.connections)
 		self.web = Server('web server',self.poller,'read_web', configuration.web.connections)
+		self.icap = Server('icap server',self.poller,'read_icap', configuration.icap.connections)
 
-		self.reactor = Reactor(self.configuration, self.web, self.proxy, self.manager, self.content, self.client, self.resolver, self.log_writer, self.usage_writer, self.poller)
+		self.reactor = Reactor(self.configuration, self.web, self.proxy, self.icap, self.manager, self.content, self.client, self.resolver, self.log_writer, self.usage_writer, self.poller)
 
 		self._shutdown = True if self.daemon.filemax == 0 else False  # stop the program
 		self._softstop = False  # stop once all current connection have been dealt with
@@ -396,6 +398,17 @@ class Supervisor (object):
 			if not ok:
 				self.log.critical('IPv6 proxy, unable to listen on %s:%s' % (tcp6.host,tcp6.port))
 
+		if ok and self.configuration.icap.enable:
+			s = self.icap.listen(self.configuration.icap.host, self.configuration.icap.port, tcp4.timeout, tcp4.backlog)
+			ok = bool(s)
+			if not ok:
+				self.log.critical('ICAP server, unable to listen on %s:%s' % (self.configuration.icap.host, self.configuration.icap.port))
+
+		if ok and self.configuration.icap.enable and tcp6.listen:
+			s = self.icap.listen(self.configuration.icap.ipv6, self.configuration.icap.port, tcp4.timeout, tcp4.backlog)
+			ok = bool(s)
+			if not ok:
+				self.log.critical('ICAP server, unable to listen on %s:%s' % (self.configuration.icap.host, self.configuration.icap.port))
 
 		if ok and self.configuration.web.enable:
 			s = self.web.listen(self.configuration.web.host,self.configuration.web.port, 10, 10)
