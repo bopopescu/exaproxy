@@ -410,7 +410,7 @@ Encapsulated: req-hdr=0, null-body=%d
 		try:
 			self.process.stdin.write(headers)
 			response = self.process.stdout.readline()
-			code = response.rstrip().split()[1]
+			code = (response.rstrip().split()+[None])[1] if response else None
 			length = -1
 
 			while True:
@@ -435,8 +435,11 @@ Encapsulated: req-hdr=0, null-body=%d
 				response += headers_s
 				read_bytes += len(headers_s)
 
+			if code is None:
+				response = None
+
 			# 304 (not modified)
-			if code != '304' and length < 0:
+			elif code != '304' and length < 0:
 				response = None
 
 		except IOError:
