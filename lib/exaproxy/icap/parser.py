@@ -63,6 +63,9 @@ class ICAPParser (object):
 		else:
 			headers = None
 
+		site_name = url.rsplit(',',1)[-1] if ',' in url else 'default'
+		headers['x-customer-name'] = site_name
+
 		http_request = self.http_factory.parseRequest(peer, http_string) if headers else None
 		icap_request = self.icap_factory.create(headers, http_request, icap_string, http_string) if http_request else None
 
