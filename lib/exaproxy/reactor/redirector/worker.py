@@ -521,6 +521,7 @@ Pragma: host=%s""" % (
 		username = request.headers.get('x-authenticated-user', None)
 		groups = request.headers.get('x-authenticated-groups', None)
 		ip_addr = request.headers.get('x-client-ip', None)
+		customer = request.headers.get('x-customer-name', None)
 
 		if ip_addr:
 			icap_request += """
@@ -533,6 +534,10 @@ X-Authenticated-User: %s""" % username
 		if groups:
 			icap_request += """
 X-Authenticated-Groups: %s""" % groups
+
+		if customer:
+			icap_request += """
+X-Customer-Name: %s""" % customer
 
 		return icap_request + """
 Encapsulated: req-hdr=0, null-body=%d
