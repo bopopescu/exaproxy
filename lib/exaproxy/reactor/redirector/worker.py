@@ -518,10 +518,10 @@ Pragma: host=%s""" % (
 			peer, request.http_request.host,
 			)
 
-		username = request.headers.get('x-authenticated-user', None)
-		groups = request.headers.get('x-authenticated-groups', None)
-		ip_addr = request.headers.get('x-client-ip', None)
-		customer = request.headers.get('x-customer-name', None)
+		username = request.headers.get('x-authenticated-user', '').strip()
+		groups = request.headers.get('x-authenticated-groups', '').strip()
+		ip_addr = request.headers.get('x-client-ip', '').strip()
+		customer = request.headers.get('x-customer-name', '').strip()
 
 		if ip_addr:
 			icap_request += """
