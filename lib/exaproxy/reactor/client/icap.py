@@ -240,15 +240,12 @@ class ICAPClient (object):
 						# most likely could not find an header
 						break
 
-					if not request:
-						yield '', '', ''
-						continue
-
-					if mode == 'icap':
+					if request and mode == 'icap':
 						icap_request = request
-						seek = 0
-						request = ''
+						request, r_buffer, seek = self.checkRequest(r_buffer, max_buffer, 0)
 						mode = 'request'
+
+					if not request:
 						yield '', '', ''
 						continue
 
