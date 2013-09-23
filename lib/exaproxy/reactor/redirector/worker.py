@@ -627,7 +627,7 @@ Encapsulated: req-hdr=0, null-body=%d
 		message, response = self.parseHTTP(peer, http_header)
 
 		if response is None and source == 'web':
-			response = Respond.monitor(client_id, received_request.request.path)
+			response = Respond.monitor(client_id, message.request.path)
 			message = None
 
 		if message is not None:
