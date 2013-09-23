@@ -55,8 +55,8 @@ class ICAPParser (object):
 			request_line = None
 
 		method, url, version = self.parseRequestLine(request_line)
-		method = method.upper()
-		version = version.upper()
+		method = method.upper() if method is not None else None
+		version = version.upper() if version is not None else None
 
 		if method in self.METHODS and version in self.VERSIONS:
 			headers = self.readHeaders(request_lines)
