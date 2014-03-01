@@ -202,7 +202,7 @@ class RedirectorManager (object):
 			decision = None
 
 		if command == 'requeue':
-			_client_id, _peer, _source, _header, _subheader = response.split('\0', 3)
+			_client_id, _command, _peer, _source, _header, _subheader = response.split('\0', 5)
 			self.queue.put((_client_id,_peer,_header,_subheader,_source,True))
 
 			client_id = None
