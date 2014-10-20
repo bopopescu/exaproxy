@@ -545,7 +545,7 @@ Encapsulated: req-hdr=0, null-body=%d
 %s""" % (len(request.http_header), request.http_header)
 
 
-	def parseHTTP (self, peer, http_header):
+	def parseHTTP (self, client_id, peer, http_header):
 		message = HTTP(self.configuration, http_header, peer)
 
 		if not message.parse(self._transparent):
@@ -587,6 +587,8 @@ Encapsulated: req-hdr=0, null-body=%d
 		return response
 
 	def doHTTPConnect (self, client_id, peer, message):
+        method = message.request.method
+
 		if not self.configuration.http.allow_connect or message.port not in self.configuration.security.connect:
 			# NOTE: we are always returning an HTTP/1.1 response
 			response = Respond.http(client_id, http('501', 'CONNECT NOT ALLOWED\n'))
@@ -606,25 +608,19 @@ Encapsulated: req-hdr=0, null-body=%d
 			max_forward = int(max_forwards) if max_forwards.isdigit() else None
 
 			if max_forward is None:
-				response = Respond.http(client_id, http('400', 'INVALID MAX-FORWARDS\n'))
 				self.usage.logRequest(client_id, peer, method, message.url, 'ERROR', 'INVALID MAX FORWARDS')
+				return Respond.http(client_id, http('400', 'INVALID MAX-FORWARDS\n'))
 
 			elif max_forward == 0:
-				response = Respond.http(client_id, http('200', ''))
 				self.usage.logRequest(client_id, peer, method, message.url, 'PERMIT', method)
-
-			else:
-				response = None
+				return Respond.http(client_id, http('200', ''))
 
 			message.headers.set('max-forwards','Max-Forwards: %d' % (max_forward-1))
 
-		if response is None:
-			response = Respond.download(client_id, message.headerhost, message.port, message.upgrade, message.content_length, self.transparent(message, peer))
-
-		return response
+		return Respond.download(client_id, message.headerhost, message.port, message.upgrade, message.content_length, self.transparent(message, peer))
 
 	def doHTTP (self, client_id, peer, http_header, source, tainted):
-		message, response = self.parseHTTP(peer, http_header)
+		message, response = self.parseHTTP(client_id, peer, http_header)
 
 		if response is None and source == 'web':
 			response = Respond.monitor(client_id, message.request.path)
@@ -646,7 +642,7 @@ Encapsulated: req-hdr=0, null-body=%d
 			elif method in (
 			'BCOPY', 'BDELETE', 'BMOVE', 'BPROPFIND', 'BPROPPATCH', 'COPY', 'DELETE','LOCK', 'MKCOL', 'MOVE',
 			'NOTIFY', 'POLL', 'PROPFIND', 'PROPPATCH', 'SEARCH', 'SUBSCRIBE', 'UNLOCK', 'UNSUBSCRIBE', 'X-MS-ENUMATTS'):
-				response = selfRespond.download(client_id, message.headerhost, message.port, message.upgrade, message.content_length, self.transparent(message, peer))
+				response = Respond.download(client_id, message.headerhost, message.port, message.upgrade, message.content_length, self.transparent(message, peer))
 				self.usage.logRequest(client_id, peer, method, message.url, 'PERMIT', method)
 
 			elif message.request in self.configuration.http.extensions:
