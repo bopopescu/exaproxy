@@ -339,7 +339,7 @@ Encapsulated: req-hdr=0, null-body=%d
 			if _[1]:  # is not an empty string
 				connect = _[0]
 				headers = _[1]
-				request = Request(connect.split('\n')[0]).parse()
+				request = Request(connect.split('\n')[0]+'\n').parse()
 
 				if not request:
 					return message, 'file', 'internal_error.html', ''
