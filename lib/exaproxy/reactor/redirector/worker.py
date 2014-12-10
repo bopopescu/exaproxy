@@ -599,7 +599,7 @@ Encapsulated: req-hdr=0, null-body=%d
 
 		return response
 
-	def doHTTPOptions (self, client, peer, message):
+	def doHTTPOptions (self, client_id, peer, message):
 		# NOTE: we are always returning an HTTP/1.1 response
 		method = message.request.method
 
