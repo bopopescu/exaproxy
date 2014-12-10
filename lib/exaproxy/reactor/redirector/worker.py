@@ -587,7 +587,7 @@ Encapsulated: req-hdr=0, null-body=%d
 		return response
 
 	def doHTTPConnect (self, client_id, peer, message):
-        method = message.request.method
+		method = message.request.method
 
 		if not self.configuration.http.allow_connect or message.port not in self.configuration.security.connect:
 			# NOTE: we are always returning an HTTP/1.1 response
