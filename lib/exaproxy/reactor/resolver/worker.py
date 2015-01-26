@@ -181,9 +181,8 @@ class TCPClient (DNSClient):
 					yield ''
 					continue
 
-			else:
-				if not buffer_s:
-					break
+			if not buffer_s:
+				break
 
 		yield None
 
