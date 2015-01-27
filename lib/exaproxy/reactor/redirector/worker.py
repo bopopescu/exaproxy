@@ -586,7 +586,7 @@ Encapsulated: req-hdr=0, null-body=%d
 
 		return response
 
-	def doHTTPConnect (self, client_id, peer, message):
+	def doHTTPConnect (self, client_id, peer, message, http_header, source, tainted):
 		method = message.request.method
 
 		if not self.configuration.http.allow_connect or message.port not in self.configuration.security.connect:
@@ -594,8 +594,17 @@ Encapsulated: req-hdr=0, null-body=%d
 			response = Respond.http(client_id, http('501', 'CONNECT NOT ALLOWED\n'))
 			self.usage.logRequest(client_id, peer, method, message.url, 'DENY', 'CONNECT NOT ALLOWED')
 
+		elif self.enabled:
+			classification = self.classify(message, http_header, tainted)
+
+			if classification[1] == 'permit':
+				response = Respond.connect(client_id, message.host, message.port, message)
+
+			else:
+				(operation, destination), response = self.request(client_id, *(classification + (peer, http_header, source)))
+
 		else:
-			response = None
+			response = Respond.connect(client_id, message.host, message.port, message)
 
 		return response
 
@@ -633,7 +642,7 @@ Encapsulated: req-hdr=0, null-body=%d
 				response = self.doHTTPRequest(client_id, peer, message, http_header, source, tainted)
 
 			elif method == 'CONNECT':
-				response = self.doHTTPConnect(client_id, peer, message)
+				response = self.doHTTPConnect(client_id, peer, message, http_header, source, tainted)
 				response = response or self.doHTTPRequest(client_id, peer, message, http_header, source, tainted)
 
 			elif method in ('OPTIONS','TRACE'):
