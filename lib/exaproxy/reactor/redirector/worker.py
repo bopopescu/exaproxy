@@ -740,7 +740,7 @@ Encapsulated: req-hdr=0, null-body=%d
 				continue
 
 			if not self.checkChild():
-				response = Respond.requeue(client_id, peer, icap_header, http_header, source) if source != 'nop' else None
+				response = Respond.requeue(client_id, peer, header, subheader, source) if source != 'nop' else None
 				if self.running:
 					self.log.warning('Cleanly stopping worker thread after the forked process exited')
 				self.running = False
