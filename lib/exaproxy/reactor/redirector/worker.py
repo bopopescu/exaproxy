@@ -336,7 +336,10 @@ Encapsulated: req-hdr=0, null-body=%d
 		# QUICK and DIRTY, let do a intercept using the CONNECT syntax
 		if headers.startswith('CONNECT'):
 			_ = headers.replace('\r\n','\n').split('\n\n',1)
-			if _[1]:  # is not an empty string
+			if _[1] and not _[1].strip():
+				headers = _[0]
+
+			elif _[1]:  # is not an empty string
 				connect = _[0]
 				headers = _[1]
 				request = Request(connect.split('\n')[0]+'\n').parse()
