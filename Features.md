@@ -1,0 +1,54 @@
+# Overview #
+
+ExaProxy is a small and fast proxy. It uses select on Unix like systems and epoll on linux to provide the best performance possible. It is written in Python and can be installed without any dependencies.
+
+It can forward HTTPS request from web clients / other proxies using the CONNECT directive.
+
+ExaProxy was developed to be a transparent proxy, and can be used without client side configuration. Thanks to its url rewriting features, compatible with [SQUID rewriters](http://www.squid-cache.org/Doc/config/url_rewrite_program/), it can as well be used as reverse proxy where complex URL rewriting are required.
+
+The code is modular and we do welcome contribution from other parties. ExaProxy can server files locally, for example displaying "denied" pages, without requiring the installation of a third party web server.
+
+ExaProxy does not require any root privileges.
+
+# Features #
+
+  * Non-caching HTTP Proxy
+    * HTTP (1.0 / 1.1)
+    * HTTPS (supports CONNECT)
+  * Polyvalent
+    * forward, reverse or transparent proxy
+    * IPv6 and/or IPv4 support
+      * for incoming connection (we are in 2012)
+      * for outgoing connection (so it can provide  IPv6 access to IPv4 only clients or vice versa)
+  * High Performance
+    * non-blocking event based network loop
+    * using epoll on Linux, select on other OSes
+    * use of cheap co-routine to handle clients connections
+    * automatically adding threads to handle load peaks (threads are forking the redirectors programs)
+    * internal use of sockets as message parsing technique with the threads
+    * internal non-blocking DNS resolver (UDP and TCP messages integrated in the main loop)
+    * optional local DNS caching of records
+  * Traffic interception
+    * forks helper redirector programs able to perform traffic modification
+    * [SQUID compatible](http://www.squid-cache.org/Doc/config/url_rewrite_program/) interface
+      * provides a new file:// interface, to serve local files as answer
+      * provides a new intercept:// interface, to force the connection to a particular backend host
+      * provides a new redirect:// interface allowing to return a 302 redirect to the host
+    * [ICAP compatible](http://www.faqs.org/rfcs/rfc3507.html) interface via local program
+      * message are in ICAP format (to make it easy to write a real ICAP helper later on)
+      * parse ICAP response (only accept "Encapsulated: res-hdr=0, null-body=" replies)
+      * accept CONNECT with HTTP request, modified replies are then redirected.
+      * accept "GET file:// HTTP/1.1" reply to serve local files
+      * 304 not modified support
+    * many examples of helper programs in [the repository](http://code.google.com/p/exaproxy/source/browse/#hg%2Fetc%2Fexaproxy%2Fredirector)
+  * Built-in web servers to monitor the proxy via local webpage ( default http://127.0.0.1:8080 )
+
+
+# Redirector API #
+
+The SQUID redirector API was improved and we accept more than the usual http:// answer.
+New options such as file:// to serve a local file, or intercept:// to redirect the page are as well available or redirect:// to serve a 302 redirection page.
+
+intercept:// could be used to redirect all request to a local caching proxy for example.
+
+Just browse the etc/exaproxy/redirector folder for many examples of what can be done, from forcing Youtube safesearch through cookie, to send https:// request to google to https://www.wolframalpha.com/ - just for fun :)
